@@ -1,0 +1,119 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3
+-- Dumped by pg_dump version 13.3
+
+-- Started on 2021-07-29 17:28:04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 208 (class 1259 OID 16977)
+-- Name: tasks; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.tasks (
+    id integer NOT NULL,
+    task_tittle character varying(255),
+    due_date timestamp with time zone,
+    description text,
+    file character varying(255),
+    completed boolean DEFAULT false,
+    "completedAt" timestamp with time zone,
+    "createdAt" timestamp with time zone,
+    "updatedAt" timestamp with time zone,
+    assignee_id character varying
+);
+
+
+ALTER TABLE public.tasks OWNER TO postgres;
+
+--
+-- TOC entry 207 (class 1259 OID 16975)
+-- Name: tasks_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.tasks_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.tasks_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3030 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: tasks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.tasks_id_seq OWNED BY public.tasks.id;
+
+
+--
+-- TOC entry 2890 (class 2604 OID 17034)
+-- Name: tasks id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tasks ALTER COLUMN id SET DEFAULT nextval('public.tasks_id_seq'::regclass);
+
+
+--
+-- TOC entry 3024 (class 0 OID 16977)
+-- Dependencies: 208
+-- Data for Name: tasks; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.tasks VALUES (5, 'sales', '2021-07-21 11:49:37.659+07', 'sales', NULL, false, NULL, '2021-07-21 06:45:46.677+07', '2021-07-21 06:45:46.677+07', NULL);
+INSERT INTO public.tasks VALUES (6, 'finance', '2021-07-21 11:49:37.659+07', 'sales', NULL, false, NULL, '2021-07-21 08:15:13.116+07', '2021-07-21 08:15:13.116+07', NULL);
+INSERT INTO public.tasks VALUES (9, 'report', '2021-07-21 11:49:37.659+07', 'sales', 'abcdefg', false, NULL, '2021-07-21 17:31:51.258+07', '2021-07-21 17:35:40.77+07', '1');
+INSERT INTO public.tasks VALUES (12, 'finance sales', '2021-07-21 11:49:37.659+07', 'sales', 'abcdefg', false, NULL, '2021-07-22 12:20:43.651+07', '2021-07-22 12:20:43.651+07', '1');
+INSERT INTO public.tasks VALUES (13, 'finance sales', '2021-07-21 11:49:37.659+07', 'sales', 'abcdefg', false, NULL, '2021-07-22 12:20:56.633+07', '2021-07-22 12:20:56.633+07', '1');
+INSERT INTO public.tasks VALUES (39, 'check', '2021-08-08 17:00:00+07', 'check progress', NULL, false, NULL, '2021-07-27 17:40:27.39+07', '2021-07-27 17:50:37.454+07', '4');
+INSERT INTO public.tasks VALUES (40, 'check', '2021-08-08 17:00:00+07', 'check progress', NULL, false, NULL, '2021-07-27 17:59:06.129+07', '2021-07-27 17:59:06.129+07', '4');
+INSERT INTO public.tasks VALUES (41, 'check', '2021-08-08 17:00:00+07', 'check progress', NULL, false, NULL, '2021-07-27 18:00:05.684+07', '2021-07-27 18:00:05.684+07', '2');
+INSERT INTO public.tasks VALUES (42, 'check', '2021-08-08 17:00:00+07', 'check progress', NULL, false, NULL, '2021-07-29 11:10:25.078+07', '2021-07-29 11:10:25.078+07', '2');
+
+
+--
+-- TOC entry 3031 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: tasks_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.tasks_id_seq', 19, true);
+
+
+--
+-- TOC entry 2892 (class 2606 OID 16986)
+-- Name: tasks tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tasks
+    ADD CONSTRAINT tasks_pkey PRIMARY KEY (id);
+
+
+-- Completed on 2021-07-29 17:28:04
+
+--
+-- PostgreSQL database dump complete
+--
+

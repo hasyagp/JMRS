@@ -56,9 +56,9 @@ router.post("/register", urlencodedParser, async (req, res) => {
 
         const user_password = await bcrypt.hashSync(password, salt);
 
-        // console.log(user_email, user_name, user_password);
+        console.log(user_email, user_name, user_password);
 
-        if (user_email && user_password) {
+        if (user_email) {
             let user = await getUser({ user_email: user_email });
 
             if (user) {

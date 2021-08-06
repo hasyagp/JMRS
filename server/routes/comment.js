@@ -7,9 +7,10 @@ const Comment = require("../models/comment");
 router.get("/", async (req, res) => {
     try {
         const comment = await Comment.findAll({
+            // include: Task,
+            // User
             include: [{
-                model: User
-            }, {
+
                 model: Task,
                 include: { model: User }
             }]
@@ -33,12 +34,17 @@ router.get("/", async (req, res) => {
 })
 
 
-router.get("/:comment_id", async (req, res) => {
+router.get("/:task_id", async (req, res) => {
     try {
         const comment = await Comment.findAll({
             where: {
-                comment_id: req.params.comment_id
-            }
+                task_id: req.params.task_id
+            }, include: [{
+                model: User
+            }, {
+                model: Task,
+                include: { model: User }
+            }]
         })
         if (comment.length > 0) {
             res.status(200).json({

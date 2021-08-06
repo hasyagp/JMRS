@@ -1,10 +1,10 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-const user = require("../models/user");
-const task = require("../models/task");
+const User = require("../models/user");
+const Task = require("../models/task");
 
-const Comment = sequelize.define("comment", {
+const Comment = sequelize.define("comments", {
     text: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -19,7 +19,10 @@ const Comment = sequelize.define("comment", {
     }
 })
 
-Comment.hasOne(user, { foreignKey: 'id' });
-Comment.hasOne(task, { foreignKey: 'id' });
+User.hasMany(Comment, { foreignKey: 'user_id' });
+Comment.belongsTo(User, { foreignKey: 'user_id' });
+
+Task.hasMany(Comment, { foreignKey: 'task_id' });
+Comment.belongsTo(Task, { foreignKey: 'task_id' })
 
 module.exports = Comment;

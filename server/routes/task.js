@@ -1,30 +1,91 @@
 const express = require("express");
 const router = express.Router();
+const app = express();
 const Task = require("../models/task");
 const User = require("../models/user");
 const corsMiddleware = require('../cors');
 const bodyParser = require("body-parser");
-// const path = require('path');
+const path = require('path');
+const { Op } = require('sequelize');
+
+const saltedMd5 = require('salted-md5')
+const multer = require("multer");
+// upload firebase
+// var admin = require("firebase-admin");
+var serviceAccount = "firebase/spmm-6e307-firebase-adminsdk-x88kb-672213bdf1.json";
+const bucketUrl = "gs://spmm-6e307.appspot.com";
+// const gcs = require('@google-cloud/storage')({ keyFilename: serviceAccount });
+// const bucket = gcs.bucket(bucketUrl);
+
+const { Storage } = require('@google-cloud/storage');
+
+const storage = new Storage({
+    projectId: "spmm-6e307",
+    keyFilename: serviceAccount
+});
+
+const bucket = storage.bucket(bucketUrl);
+
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount),
+//     storageBucket: bucketUrl
+// });
+
+// app.locals.bucket = admin.storage().bucket()
+
+// Upload
+const uploadImageToStorage = (file) => {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            reject('No file');
+        }
+        const name = saltedMd5(file.originalname, 'SUPER-S@LT!')
+        const fileName = name + path.extname(file.originalname)
+        // These options will allow temporary uploading of the file with outgoing
+        // Content-Type: application/octet-stream header.
+        const options = {
+            version: 'v4',
+            action: 'write',
+            expires: Date.now() + 15 * 60 * 1000, // 15 minutes
+            contentType: 'application/octet-stream',
+        };
+        // Get a v4 signed URL for uploading file
+        bucket
+            .file(fileName)
+            .getSignedUrl(options, function (err, url) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(url)
+                }
+            });
+    });
+}
+
+const upload = multer({
+    storage: multer.memoryStorage()
+})
 
 const urlencodedParser = bodyParser.urlencoded({ extended: false })
 
 router.get("/", async (req, res) => {
     try {
-        const task = await Task.findAll({
-            include: { model: User }
+        const tasks = await Task.findAll({
+            include: [
+
+                { model: User, as: 'assignedUser' },
+                { model: User, as: 'createdByUser' }
+            ]
         });
-        if (task.length > 0) {
-            res.status(200).json({
-                // message: 'get  method task',
-                // data:
-                task
-            })
+        if (tasks.length > 0) {
+            res.status(200).json(tasks)
         } else {
             res.status(200).json({
                 message: 'empty task',
                 data: []
             })
         }
+
     } catch (error) {
         res.status(404).json({
             message: error.message
@@ -34,57 +95,30 @@ router.get("/", async (req, res) => {
 })
 
 
-router.get("/:task_tittle", async (req, res) => {
-    try {
-
-        const task = await Task.findAll({
-            include: { model: User, required: false },
-            where: {
-                task_tittle: req.params.task_tittle
-            }
-
-        })
-        // if (task.length > 0) {
-        res.status(200).json({
-            message: 'get  method task',
-            data: task
-        })
-        // })
-        // } else {
-        //     res.status(200).json({
-        //         message: 'empty task',
-        //         data: []
-        //     })
-        // }
-    } catch (error) {
-        res.status(404).json({
-            message: error.message
-        })
-    }
-})
 
 router.get("/:id", async (req, res) => {
     try {
 
-        const task = await Task.findAll({
-            include: { model: User, required: false },
+        const task = await Task.findOne({
+            // include: { model: User, required: false },
             where: {
                 id: req.params.id
             }
 
-        })
-        // if (task.length > 0) {
-        res.status(200).json({
-            message: 'get  method task',
-            data: task
-        })
-        // })
-        // } else {
-        //     res.status(200).json({
-        //         message: 'empty task',
-        //         data: []
-        //     })
-        // }
+        });
+        console.log(task);
+        if (task === null) {
+            res.status(200).json({
+                message: 'empty task',
+                data: req.params.id
+            })
+        } else {
+            res.status(200).json({
+                message: 'get  method task',
+                task
+            })
+        }
+
     } catch (error) {
         res.status(404).json({
             message: error.message
@@ -92,31 +126,84 @@ router.get("/:id", async (req, res) => {
     }
 })
 
-router.post("/add", async function (req, res) {
+router.get("/user/:id", async (req, res) => {
+    try {
+
+        const task = await Task.findAll({
+            include: [
+
+                { model: User, as: 'assignedUser' },
+                { model: User, as: 'createdByUser' }
+            ],
+            // include: { model: User, required: false },
+            where: {
+                [Op.or]: [{ assignee_id: req.params.id },
+                { createdBy: req.params.id }]
+
+            }
+
+        });
+        console.log(task);
+        if (task === null) {
+            res.status(200).json({
+                message: 'empty task',
+                data: req.params.id
+            })
+        } else {
+            res.status(200).json({
+                message: 'get  method task',
+                task
+            })
+        }
+
+    } catch (error) {
+        res.status(404).json({
+            message: error.message
+        })
+    }
+})
+
+var type = upload.single('recfile');
+
+router.post("/add", type, async function (req, res) {
 
     try {
-        // if (!req.body.task_tittle) {
-        //     res.status(400).send({
-        //         message: "Tittle can not be empty!"
-        //     });
-        // }
-        console.log(req.body);
-        const { task_tittle, due_date, description, file, assignee_id } = req.body;
+        let file = req.file;
+        if (!file) {
+            res.status(400).send("Error: No files found")
+        } else {
+            const { task_tittle, due_date, description, assignee_id, createdBy } = req.body;
 
-        const newTask = new Task({
-            task_title,
-            due_date,
-            description,
-            file,
-            assignee_id,
-        });
+            uploadImageToStorage(file).then((success) => {
+                console.log(success)
+                Task.create({
+                    task_tittle: task_tittle,
+                    due_date: due_date,
+                    description: description,
+                    assignee_id: assignee_id,
+                    file: req.file.originalname,
+                    filepath: success,
+                    createdBy: createdBy
 
-        await newTask.save();
-        res.json(newTask);
+                }).then(function (task) {
+                    if (task) {
+                        res.status(200).json({
+                            message: "Masuk",
+                            data: task
+                        })
+                    } else {
+                        response.status(400).send('Error in insert new record');
+                    }
+                });
+            }).catch((error) => {
+                console.error(error);
+                res.status(400).send({
+                    status: error
+                });
+            });
 
-        // res.status(201).json({
-        //     data: task
-        // })
+        }
+
     } catch (error) {
         res.status(404).json({
             message: error.message
@@ -126,35 +213,56 @@ router.post("/add", async function (req, res) {
 
 });
 
-router.put("/:id", urlencodedParser, async function (req, res) {
-
+router.put("/:id", type, async function (req, res) {
     try {
-        let task = await Task.update({
-            task_tittle: req.body.task_tittle,
-            due_date: req.body.due_date,
-            description: req.body.description,
-            file: req.body.file,
-            completed: req.body.completed,
-            assignee_id: req.body.assignee_id,
-            completedAt: req.body.completedAt,
-        }, {
-            where: {
-                id: req.params.id
-            }
-        })
+        let file = req.file;
+        if (!file) {
+            res.status(400).send("Error: No files found")
+        } else {
+            const { task_tittle, due_date, description, assignee_id } = req.body;
 
-        res.status(201).json({
-            message: 'data berhasil di update'
-        })
+            uploadImageToStorage(file).then((success) => {
+                console.log(success)
+                Task.update({
+                    task_tittle: task_tittle,
+                    due_date: due_date,
+                    description: description,
+                    assignee_id: assignee_id,
+                    file: req.file.originalname,
+                    filepath: success,
+
+                }, {
+                    where: {
+                        id: req.params.id
+                    }
+                }).then(function (task) {
+                    if (task) {
+                        res.status(200).json({
+                            message: "Edit Sukses",
+                            data: task
+                        })
+                    } else {
+                        response.status(400).send('Error in insert new record');
+                    }
+                });
+            }).catch((error) => {
+                console.error(error);
+                res.status(400).send({
+                    status: error
+                });
+            });
+
+        }
+
     } catch (error) {
         res.status(404).json({
             message: error.message
         })
+        console.log(error.message);
     }
-
 });
 
-router.delete("/:id", urlencodedParser, async function (req, res) {
+router.delete("/:id", async function (req, res) {
 
     try {
         let task = await Task.destroy({

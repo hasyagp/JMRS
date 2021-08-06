@@ -48,7 +48,7 @@ const getUser = async obj => {
 };
 
 
-router.post("/register", urlencodedParser, async (req, res) => {
+router.post("/register", async (req, res) => {
     try {
         const { user_name, user_email, password } = await req.body;
 
@@ -62,16 +62,14 @@ router.post("/register", urlencodedParser, async (req, res) => {
             let user = await getUser({ user_email: user_email });
 
             if (user) {
-                res.status(401).json({ msg: "email sudah terdaftar" });
+                res.status(401).json({ message: "email sudah terdaftar" });
             } else {
-                const newUser = new User({
-                    user_name,
-                    user_email,
-                    user_password,
+
+                const newUser = await User.create({
+                    user_name: user_name,
+                    user_email: user_email,
+                    user_password: user_password,
                 });
-
-                await newUser.save();
-
 
                 let payload = { id: newUser.id };
 

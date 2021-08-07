@@ -100,6 +100,11 @@ router.get("/:id", async (req, res) => {
     try {
 
         const task = await Task.findOne({
+            include: [
+
+                { model: User, as: 'assignedUser' },
+                { model: User, as: 'createdByUser' }
+            ],
             // include: { model: User, required: false },
             where: {
                 id: req.params.id

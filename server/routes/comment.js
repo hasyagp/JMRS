@@ -42,8 +42,7 @@ router.get("/:task_id", async (req, res) => {
             }, include: [{
                 model: User
             }, {
-                model: Task,
-                include: { model: User }
+                model: Task
             }]
         })
         if (comment.length > 0) {

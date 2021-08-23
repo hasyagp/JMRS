@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const app = express();
 const Task = require("../models/task");
 const User = require("../models/user");
 const corsMiddleware = require('../cors');
@@ -131,7 +130,42 @@ router.get("/:id", async (req, res) => {
     }
 })
 
-router.get("/user/:id", async (req, res) => {
+router.get("project/:id", async (req, res) => {
+    try {
+
+        const task = await Task.findOne({
+            include: [
+
+                { model: User, as: 'assignedUser' },
+                { model: User, as: 'createdByUser' }
+            ],
+            // include: { model: User, required: false },
+            where: {
+                project_id: req.params.id
+            }
+
+        });
+        console.log(task);
+        if (task === null) {
+            res.status(200).json({
+                message: 'empty task',
+                data: req.params.id
+            })
+        } else {
+            res.status(200).json({
+                message: 'get  method task',
+                task
+            })
+        }
+
+    } catch (error) {
+        res.status(404).json({
+            message: error.message
+        })
+    }
+})
+
+router.get("/user/:id", async (req, res) => { //get all by user
     try {
 
         const task = await Task.findAll({
@@ -165,6 +199,54 @@ router.get("/user/:id", async (req, res) => {
         res.status(404).json({
             message: error.message
         })
+    }
+})
+
+router.get("/check/complete", async (req, res) => {
+    try {
+        const tasks = await Task.findAll({
+            where: {
+                completed: '1'
+            }
+        });
+        if (tasks.length > 0) {
+            res.status(200).json(tasks)
+        } else {
+            res.status(200).json({
+                message: 'empty task',
+                data: []
+            })
+        }
+
+    } catch (error) {
+        res.status(404).json({
+            message: error.message
+        })
+        res.send(error);
+    }
+})
+
+router.get("/check/uncomplete", async (req, res) => {
+    try {
+        const tasks = await Task.findAll({
+            where: {
+                completed: '0'
+            }
+        });
+        if (tasks.length > 0) {
+            res.status(200).json(tasks)
+        } else {
+            res.status(200).json({
+                message: 'empty task',
+                data: []
+            })
+        }
+
+    } catch (error) {
+        res.status(404).json({
+            message: error.message
+        })
+        res.send(error);
     }
 })
 
@@ -222,10 +304,14 @@ router.put("/:id", type, async function (req, res) {
     try {
         let file = req.file;
         if (!file) {
-            res.status(400).send("Error: No files found")
+            console.log("Error: No files found")
+            res.status(400).json({
+                message: "Error: No files found"
+            })
         } else {
             const { task_tittle, due_date, description, assignee_id } = req.body;
 
+            console.log(req.body);
             uploadImageToStorage(file).then((success) => {
                 console.log(success)
                 Task.update({
@@ -247,7 +333,7 @@ router.put("/:id", type, async function (req, res) {
                             data: task
                         })
                     } else {
-                        response.status(400).send('Error in insert new record');
+                        response.status(400).send('Error in edit record');
                     }
                 });
             }).catch((error) => {

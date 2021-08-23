@@ -11,6 +11,9 @@ const auth = require("./routes/auth");
 const user = require("./routes/user");
 const task = require("./routes/task");
 const comment = require("./routes/comment");
+const message = require("./routes/message");
+const project = require("./routes/project");
+const member = require("./routes/member");
 // path to upload
 const upload_path = require("./routes/upload");
 
@@ -44,7 +47,10 @@ app.use('/auth', auth);
 app.use('/user', user);
 app.use('/task', task);
 app.use('/comment', comment);
+app.use('/message', message);
 app.use('/upload', upload_path);
+app.use('/project', project);
+app.use('/member', member);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
